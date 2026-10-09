@@ -28,6 +28,7 @@ export class Pd01Printer {
       this.disconnect();
       this.device=await this.bluetooth.requestDevice({filters:[{namePrefix:'PD01'},{services:[PD01_SERVICE]}],optionalServices:[PD01_SERVICE]});
       this.device.addEventListener('gattserverdisconnected',()=>{this.tx=null;this.cancelled=true;this.onChange('Impressora desconectada.');});
+      this.onChange('Dispositivo selecionado. Conectando via Bluetooth…');
       const server=await this.device.gatt.connect();
       const service=await server.getPrimaryService(PD01_SERVICE);
       this.tx=await service.getCharacteristic('0000ae01-0000-1000-8000-00805f9b34fb');

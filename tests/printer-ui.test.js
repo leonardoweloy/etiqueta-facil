@@ -1,0 +1,7 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mountPrinterUi} from '../src/infrastructure/printer-ui.js';
+function ui(options={}){const nodes=new Map();const document={getElementById:id=>{if(!nodes.has(id))nodes.set(id,{});return nodes.get(id);}};mountPrinterUi({document,window:{confirm:()=>true},bluetooth:null,...options});return id=>document.getElementById(id);}
+test('Bluetooth UI reports unsupported browser and click error',async()=>{const $=ui();assert.match($('printerStatus').textContent,/indisponível/);await $('printerConnect').onclick();assert.match($('printerStatus').textContent,/Chrome/);assert.equal($('printerConnect').disabled,false);});
+test('Bluetooth UI keeps user activation and shows pending chooser',async()=>{let reject;let requested=false;const $=ui({bluetooth:{requestDevice:()=>{requested=true;return new Promise((_,r)=>reject=r);}}});const pending=$('printerConnect').onclick();assert.equal(requested,true);assert.match($('printerStatus').textContent,/Abrindo seletor/);assert.equal($('printerConnect').disabled,true);reject(Object.assign(Error(),{name:'NotFoundError'}));await pending;assert.match($('printerStatus').textContent,/Seleção cancelada/);assert.equal($('printerConnect').disabled,false);});
+test('Bluetooth UI reports insecure context',async()=>{const $=ui({secure:false});await $('printerConnect').onclick();assert.match($('printerStatus').textContent,/localhost/);});
