@@ -1,3 +1,4 @@
+import { Pd01Printer } from './src/infrastructure/pd01-printer.js';
 import { LabelEditor } from './src/application/label-editor.js';
 import { CanvasRenderer } from './src/infrastructure/canvas-renderer.js';
 import { PdfExporter } from './src/infrastructure/pdf-exporter.js';
@@ -5,6 +6,13 @@ import { JpegExporter } from './src/infrastructure/jpeg-exporter.js';
 import { LocalStorageLabelRepository, ScreenCalibrationStore } from './src/infrastructure/local-storage-repository.js';
 'use strict';
 const $=id=>document.getElementById(id);
+const printer = new Pd01Printer({onChange:text=>{ $('printerStatus').textContent=text; printerControls(); }});
+function printerControls(){ $('printerConnect').disabled=printer.busy; $('printerTest').disabled=printer.busy||!printer.connected; $('printerDisconnect').disabled=!printer.connected; $('printerCancel').disabled=!printer.busy||!printer.connected; }
+async function printerAction(action){try { const pending=action();printerControls();await pending; }catch(error){$('printerStatus').textContent=error.name==='NotFoundError'?'Seleção cancelada ou PD01 não encontrada.':error.message;}finally{printerControls();}}
+$('printerConnect').onclick=()=>printerAction(()=>printer.connect());
+$('printerTest').onclick=()=>{if(window.confirm('Enviar um teste pequeno à PD01? Confira papel e tampa.'))return printerAction(()=>printer.printTest(percent=>{$('printerStatus').textContent='Enviando teste: '+percent+'%';}));};
+$('printerCancel').onclick=()=>{printer.cancel();$('printerStatus').textContent='Interrompendo envio; a impressora pode concluir dados já recebidos.';};
+$('printerDisconnect').onclick=()=>{printer.disconnect();printerControls();};
 const renderer = new CanvasRenderer();
 const calibration = new ScreenCalibrationStore(localStorage);
 const editor = new LabelEditor({ repository: new LocalStorageLabelRepository(localStorage),
