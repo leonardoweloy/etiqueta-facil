@@ -5,6 +5,17 @@ import { labelTemplateCatalog, labelFromTemplate } from '../src/domain/label-tem
 import { defaultLabel } from '../src/domain/label.js';
 import { CanvasRenderer } from '../src/infrastructure/canvas-renderer.js';
 
+test('modelo CSV usa terceira coluna nos dois códigos e ativa CSV', () => {
+  const editor = makeEditor();
+  editor.configureCsv({ data: 'Monitor do Leo;000001;WADS-TI-000001' });
+  editor.applyTemplate('asset-horizontal-csv');
+  assert.equal(editor.snapshot().batchMode, 'csv');
+  const items = editor.preview().items;
+  assert.equal(items.find(item => item.type === 'barcode').value, 'WADS-TI-000001');
+  assert.equal(items.find(item => item.type === 'qr').value, 'WADS-TI-000001');
+  assert.ok(items.some(item => item.text === '000001'));
+});
+
 const makeEditor = () => new LabelEditor({ repository: { load: () => null, save() {} } });
 test('catálogo contém três bases independentes, válidas e editáveis', () => {
   const catalog = labelTemplateCatalog(); assert.equal(catalog.length, 4);
