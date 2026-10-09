@@ -1,4 +1,5 @@
 import { LabelBatch, defaultBatch } from './batch.js';
+import { CsvLabelBatch, defaultCsvBatch } from './csv-batch.js';
 /** Domínio puro: não depende de DOM, Canvas ou armazenamento. */
 export class Millimeters {
   constructor(value, min = 0, max = 300) {
@@ -28,6 +29,7 @@ function validateItem(item) {
       throw new Error('Texto inválido.');
     }
   } else if (item.type === 'barcode' || item.type === 'qr') {
+    if (item.type === 'barcode' && item.value !== undefined && typeof item.value !== 'string') throw new Error('Conteúdo Code128 deve ser texto.');
     new Millimeters(item.width, 5);
     if (item.type === 'barcode') new Millimeters(item.height, 3, 100);
     if (item.type === 'qr' && (typeof item.value !== 'string' || new TextEncoder().encode(item.value).length > 500)) throw new Error('QR aceita até 500 bytes UTF-8. Campo vazio não gera QR.');
@@ -47,9 +49,10 @@ export class Label {
     new Millimeters(data.width, 5); new Millimeters(data.height, 5);
     new Millimeters(data.margin, 0, 30); new PrintResolution(data.dpi);
     if (data.margin * 2 >= Math.min(data.width, data.height)) throw new RangeError('Margem excessiva.');
+    if (data.batchMode && !['sequential', 'csv'].includes(data.batchMode)) throw new Error('Modo de lote inválido.');
     if (!Array.isArray(data.items)) throw new Error('Elementos inválidos.');
     this.#data = { width: data.width, height: data.height, margin: data.margin,
-      dpi: data.dpi, batch: new LabelBatch(data.batch ?? defaultBatch()).snapshot(), items: data.items.map(validateItem) };
+      dpi: data.dpi, batchMode: data.batchMode ?? 'sequential', csv: new CsvLabelBatch(data.csv ?? defaultCsvBatch()).snapshot(), batch: new LabelBatch(data.batch ?? defaultBatch()).snapshot(), items: data.items.map(validateItem) };
   }
   snapshot() { return structuredClone(this.#data); }
   configure(patch) {

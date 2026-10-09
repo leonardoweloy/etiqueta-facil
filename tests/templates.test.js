@@ -7,7 +7,7 @@ import { CanvasRenderer } from '../src/infrastructure/canvas-renderer.js';
 
 const makeEditor = () => new LabelEditor({ repository: { load: () => null, save() {} } });
 test('catálogo contém três bases independentes, válidas e editáveis', () => {
-  const catalog = labelTemplateCatalog(); assert.equal(catalog.length, 3);
+  const catalog = labelTemplateCatalog(); assert.equal(catalog.length, 4);
   catalog[0].name = 'modificado'; assert.notEqual(labelTemplateCatalog()[0].name, 'modificado');
   for (const template of catalog) {
     const label = labelFromTemplate(template.id, defaultLabel().snapshot());

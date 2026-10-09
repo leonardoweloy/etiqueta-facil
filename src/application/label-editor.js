@@ -1,3 +1,4 @@
+import { CsvLabelBatch } from '../domain/csv-batch.js';
 import { Label, defaultLabel } from '../domain/label.js';
 import { LabelBatch, materializeLabel } from '../domain/batch.js';
 import { labelTemplateCatalog, labelFromTemplate } from '../domain/label-templates.js';
@@ -40,17 +41,22 @@ export class LabelEditor {
     this.save(); return index;
   }
   configureBatch(patch) { this.configure({ batch: { ...this.snapshot().batch, ...patch } }); }
-  preview() { const state = this.snapshot(); return materializeLabel(state, new LabelBatch(state.batch).identifier()); }
+  configureCsv(patch) { this.configure({ csv: { ...this.snapshot().csv, ...patch } }); this.previewIndex = 0; }
+  collection() { return new CsvLabelBatch(this.snapshot().csv); }
+  selectRow(index) { const batch = this.collection(); if (!Number.isInteger(index) || index < 0 || index >= batch.count) throw new Error('Linha de prévia inválida.'); this.previewIndex = index; }
+  preview() { const state = this.snapshot(); return state.batchMode === 'csv' ? this.collection().materialize(state, this.previewIndex ?? 0) : materializeLabel(state, new LabelBatch(state.batch).identifier()); }
   addCode(type) {
     const state = this.snapshot();
     const item = type === 'barcode'
-      ? { type, x: state.margin, y: state.margin, width: Math.min(40, state.width - 2 * state.margin), height: 8 }
+      ? { type, x: state.margin, y: state.margin, width: Math.min(40, state.width - 2 * state.margin), height: 8, value: state.batchMode === 'csv' ? '{{coluna1}}' : '' }
       : { type: 'qr', value: '', x: state.margin, y: state.margin, width: Math.min(15, state.width - 2 * state.margin) };
     const index = this.label.add(item); this.save(); return index;
   }
   exportJpeg() { return this.exporter.export(this.preview()); }
   exportPdf() {
-    const state = this.snapshot(), batch = new LabelBatch(state.batch);
+    const state = this.snapshot();
+    if (state.batchMode === 'csv') return this.pdfExporter.export(this.collection().materializeAll(state));
+    const batch = new LabelBatch(state.batch);
     return this.pdfExporter.export(Array.from({ length: batch.count }, (_, index) => materializeLabel(state, batch.identifier(index))));
   }
 }

@@ -15,13 +15,17 @@ function message(text) { $('message').textContent = text; }
 function refreshState() { state = editor.snapshot(); }
 function persist() { editor.save(); refreshState(); }
 function loadImages() { renderer.load(state.items, render); }
-function draw(canvas, preview) { boxes = renderer.draw(canvas, editor.preview(), { preview, selected }); }
+function draw(canvas, preview) {
+  try { const dto = editor.preview(); boxes = renderer.draw(canvas, dto, { preview, selected }); $('export').disabled = false; $('exportPdf').disabled = false; $('csvError').textContent = ''; }
+  catch (error) { boxes = []; renderer.draw(canvas, { ...state, items: [] }, { preview, selected: -1 }); $('csvError').textContent = error.message; $('export').disabled = true; $('exportPdf').disabled = true; }
+  if (state.batchMode === 'csv') { const batch = editor.collection(); $('csvCount').textContent = batch.count + ' etiquetas'; $('csvColumns').textContent = batch.columns.map(name => '{{' + name + '}}').join(' · '); $('csvPosition').textContent = batch.count ? ((editor.previewIndex ?? 0) + 1) + ' / ' + batch.count : 'Nenhuma linha'; }
+}
 function execute(action) {
   try { const result = action(); refreshState(); return result; }
   catch (error) { message(error.message); return undefined; }
 }
 function render(){syncSelection(state.items[selected]);const canvas=$('canvas');const scale=real?screenScale:Math.min(Math.max(120,$('workspace').clientWidth-100)/state.width,280/state.height,12);canvas.width=Math.round(state.width*8);canvas.height=Math.round(state.height*8);canvas.style.width=state.width*scale+'px';canvas.style.height=state.height*scale+'px';draw(canvas,true);$('widthRuler').textContent=state.width+' mm';$('heightRuler').textContent=state.height+' mm';$('dimensions').textContent=state.width+' × '+state.height+' mm · margem '+state.margin+' mm';$('pixels').textContent=Math.round(state.width/25.4*state.dpi)+' × '+Math.round(state.height/25.4*state.dpi)+' px · '+state.dpi+' DPI';$('calibrationBar').style.width=50*screenScale+'px';$('fit').classList.toggle('active',!real);$('real').classList.toggle('active',real);}
-function sync(){for(const key of ['width','height','margin','dpi'])$(key).value=state[key];$('preset').value=[20,58].includes(state.width)?String(state.width):'custom';$('elements').replaceChildren(...state.items.map((item,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+(item.type==='text'?item.text.slice(0,30)||'Texto vazio':item.type==='image'?'Imagem':item.type==='barcode'?'Code128 sequencial':'QR opcional');return o;}));selected=state.items.length?Math.max(0,Math.min(selected,state.items.length-1)):-1;$('elements').value=selected;const item=state.items[selected];syncSelection(item);for(const id of ['text','size','weight','x','y','imageWidth','remove'])$(id).disabled=!item;$('textFields').hidden=item?.type!=='text';$('codeFields').hidden=!['barcode','qr'].includes(item?.type);$('qrValue').disabled=item?.type!=='qr';$('barcodeHeightLabel').hidden=item?.type!=='barcode';if(item?.type==='barcode'||item?.type==='qr'){$('codeWidth').value=item.width;$('codeHeight').value=item.height??8;$('qrValue').value=item.value??'';}$('imageFields').hidden=item?.type!=='image';if(item){$('x').value=item.x;$('y').value=item.y;if(item.type==='text'){for(const key of ['text','size','weight'])$(key).value=item[key];}else if(item.type==='image') $('imageWidth').value=item.width;}loadImages();render();}
+function sync(){for(const key of ['width','height','margin','dpi'])$(key).value=state[key];$('preset').value=[20,58].includes(state.width)?String(state.width):'custom';$('elements').replaceChildren(...state.items.map((item,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+(item.type==='text'?item.text.slice(0,30)||'Texto vazio':item.type==='image'?'Imagem':item.type==='barcode'?'Code128 sequencial':'QR opcional');return o;}));selected=state.items.length?Math.max(0,Math.min(selected,state.items.length-1)):-1;$('elements').value=selected;const item=state.items[selected];syncSelection(item);for(const id of ['text','size','weight','x','y','imageWidth','remove'])$(id).disabled=!item;$('textFields').hidden=item?.type!=='text';$('codeFields').hidden=!['barcode','qr'].includes(item?.type);$('qrValue').disabled=!(item?.type==='qr'||(item?.type==='barcode'&&state.batchMode==='csv'));$('barcodeHeightLabel').hidden=item?.type!=='barcode';if(item?.type==='barcode'||item?.type==='qr'){$('codeWidth').value=item.width;$('codeHeight').value=item.height??8;$('qrValue').value=item.value??'';}$('imageFields').hidden=item?.type!=='image';if(item){$('x').value=item.x;$('y').value=item.y;if(item.type==='text'){for(const key of ['text','size','weight'])$(key).value=item[key];}else if(item.type==='image') $('imageWidth').value=item.width;}loadImages();render();}
 for(const key of ['width','height','margin','dpi'])$(key).addEventListener('change',()=>{let n=Number($(key).value);if(!Number.isFinite(n)||!$(key).checkValidity()){sync();return;}execute(()=>editor.configure({[key]:n}));sync();});
 $('preset').onchange=()=>{if($('preset').value!=='custom'){execute(()=>editor.selectTape(Number($('preset').value)));sync();}};
 $('saveProfile').onclick=()=>{persist();message('Medidas e conteúdo salvos como padrão neste navegador.');};
@@ -79,6 +83,8 @@ function stopDrag(){if(drag){drag=null;persist();}}$('canvas').onpointerup=stopD
 $('export').onclick=async()=>{try{const blob=await editor.exportJpeg();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='etiqueta-'+state.width+'x'+state.height+'mm-'+state.dpi+'dpi.jpg';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);render();message('JPG exportado sem guias de edição. Confira o tamanho no software de impressão.');}catch(error){message('Não foi possível exportar: '+error.message);}};
 const batchFields = { batchMode: 'mode', batchStart: 'start', batchQuantity: 'quantity', batchEnd: 'end', batchPrefix: 'prefix', batchDigits: 'digits' };
 function syncBatch() {
+  $('sourceMode').value = state.batchMode; $('csvFields').hidden = state.batchMode !== 'csv';
+  $('csvData').value = state.csv.data; $('csvSeparator').value = state.csv.separator; $('csvHeader').checked = state.csv.header;
   for (const [id, field] of Object.entries(batchFields)) $(id).value = state.batch[field];
   $('quantityLabel').hidden = state.batch.mode !== 'quantity'; $('endLabel').hidden = state.batch.mode !== 'range';
 }
@@ -99,4 +105,7 @@ $('exportPdf').onclick = async () => {
   } catch (error) { message('Não foi possível exportar PDF: ' + error.message); }
   finally { $('exportPdf').disabled = false; }
 };
+$('sourceMode').addEventListener('change', () => { execute(() => editor.configure({ batchMode: $('sourceMode').value })); syncBatch(); sync(); });
+$('importCsv').onclick = () => { execute(() => editor.configureCsv({ data: $('csvData').value, separator: $('csvSeparator').value, header: Boolean($('csvHeader').checked) })); render(); };
+for (const [id, delta] of [['csvPrevious', -1], ['csvNext', 1]]) $(id).onclick = () => { const index = (editor.previewIndex ?? 0) + delta; if (index >= 0 && index < editor.collection().count) execute(() => editor.selectRow(index)); render(); };
 window.addEventListener('resize',render);sync();syncBatch();

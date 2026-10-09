@@ -34,6 +34,8 @@ const templates = [
     ],
   },
 ];
+const horizontal = templates.find(template => template.id === 'asset-horizontal-58mm');
+templates.push({ ...horizontal, id: 'asset-horizontal-csv', name: 'Patrimônio horizontal CSV', description: '58 × 30 mm · equipamento e identificador do CSV (ou coluna1 / coluna2)', items: horizontal.items.map(item => item.type === 'text' && item.text === 'Monitor' ? { ...item, text: '{{coluna1}}' } : item.type === 'text' && item.text === 'Responsável' ? { ...item, text: '{{coluna2}}' } : item.type === 'barcode' ? { ...item, value: '{{coluna2}}' } : { ...item }) });
 
 export function labelTemplateCatalog() {
   return templates.map(({ id, name, description, width, height }) => ({ id, name, description, width, height }));
@@ -44,5 +46,5 @@ export function labelFromTemplate(id, current) {
   const template = templates.find(candidate => candidate.id === id);
   if (!template) throw new RangeError('Modelo de etiqueta não encontrado.');
   const { width, height, margin, items } = template;
-  return new Label({ width, height, margin, items, dpi: current.dpi, batch: current.batch });
+  return new Label({ width, height, margin, items, dpi: current.dpi, batch: current.batch, batchMode: current.batchMode, csv: current.csv });
 }

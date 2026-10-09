@@ -68,6 +68,11 @@ test('interface inicializa, troca fita e adiciona texto pelos casos de uso', asy
     assert.equal(key({},'Backspace'),true); assert.equal(saved().items.length,0);
     node('addText').onclick(); node('previewRemove').onclick(); assert.equal(saved().items.length,0);
     node('addText').onclick(); node('remove').onclick(); assert.equal(saved().items.length,0);
+    node('sourceMode').value='csv';node('sourceMode').listeners.change();assert.equal(node('export').disabled,true);assert.match(node('csvError').textContent,/importe/);
+    node('csvData').value='equipamento;identificador\nMonitor;00001\nNotebook;00002';node('csvHeader').checked=true;node('csvSeparator').value='auto';node('importCsv').onclick();assert.equal(saved().csv.header,true);assert.match(node('csvCount').textContent,/2 etiquetas/);assert.match(node('csvColumns').textContent,/coluna2/);
+    node('template').value='asset-horizontal-csv';node('template').onchange();node('applyTemplate').onclick();assert.equal(node('export').disabled,false);node('csvNext').onclick();assert.equal(node('csvPosition').textContent,'2 / 2');node('csvPrevious').onclick();assert.equal(node('csvPosition').textContent,'1 / 2');
+    const csvBefore=saved().csv;node('csvData').value='a;a';node('importCsv').onclick();assert.match(node('message').textContent,/duplicado/);assert.deepEqual(saved().csv,csvBefore);
+    node('elements').value='4';node('elements').onchange();assert.equal(node('qrValue').disabled,false);node('qrValue').value='{{missing}}';node('qrValue').listeners.change();assert.equal(node('export').disabled,true);assert.match(node('csvError').textContent,/Linha 2.*missing/);
   } finally {
     delete globalThis.document;delete globalThis.localStorage;delete globalThis.window;delete globalThis.JsBarcode;delete globalThis.qrcode;
   }

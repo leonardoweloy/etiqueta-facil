@@ -58,4 +58,14 @@ Imprima PDF a 100%, sem ajustar à página. Ajuste o layout e preserve zonas bra
 
 Bibliotecas browser estão vendorizadas em src/infrastructure/vendor: jsPDF 4.2.1, JsBarcode 3.12.1 e qrcode-generator 2.0.4, com licenças MIT. Não há CDN em runtime. Para atualizar, use npm ci (ou npm install com versões explícitas), copie as respectivas distribuições browser e preserve licenças. npm audit é recomendado. npm test inclui geometria de códigos e PDF real (MediaBox e quantidade de páginas).
 
+## Lote CSV (dados locais)
+
+Selecione CSV, cole os dados e clique Aplicar CSV. Separadores ponto e vírgula, vírgula e tabulação: automático ou seleção explícita. Cabeçalho opcional; cada linha gera uma etiqueta. Linhas vazias são ignoradas; limite 500 etiquetas e 1 milhão de caracteres. Aspas escapadas "" e campos multiline LF/CRLF são aceitos. Identificadores permanecem texto, preservando zeros.
+
+Variáveis {{coluna1}}, {{coluna2}} sempre disponíveis e nomes exatos {{equipamento}}, {{identificador}} quando houver cabeçalho. Misture texto e variáveis em texto, Code128 e QR. Selecione barcode no modo CSV para editar Conteúdo / template; sequencial continua automático. Cabeçalhos duplicados/vazios, colisões com colunaN e CSV malformado são rejeitados sem substituir dados válidos. Variável ausente e Code128 Unicode inválido bloqueiam exportação indicando linha física CSV. Code128 exige ASCII imprimível não vazio; QR aceita Unicode até 500 bytes UTF-8 por linha.
+
+Painel mostra colunas, contagem, erros e navegação. JPG exporta linha selecionada; PDF todas as linhas, página por etiqueta e mesmas medidas mm. Modelo adicional Patrimônio horizontal CSV usa coluna1 como equipamento e coluna2 como identificador. Modelos antigos intactos. Dados/configuração CSV persistem localmente e projetos antigos continuam compatíveis. CSV vazio mantém edição disponível e export desabilitado.
+
+Domínio parser/resolver/collection puro, DTOs materializados pela aplicação para preview/export pelas portas existentes. Testes cobrem quotes/multiline, zeros, atomicidade, navegação DOM, reload e PDF real mm.
+
 Não há envio direto à impressora. A precisão final depende do driver, da área imprimível e da calibração da impressora. A fonte da interface usa fontes locais do sistema. O editor não envia o conteúdo das etiquetas a servidores.
