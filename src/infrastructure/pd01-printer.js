@@ -38,6 +38,36 @@ export class Pd01Printer {
   }
   disconnect(){this.cancelled=true;this.tx=null;this.device?.gatt?.disconnect();}
   cancel(){this.cancelled=true;}
+  async printLabels(labels, rasterize, onProgress=()=>{}) {
+    if(this.busy) throw Error('Operação Bluetooth em andamento.');
+    if(!this.connected) throw Error('Conecte a PD01 primeiro.');
+    if(!Array.isArray(labels)||!labels.length||labels.length>20) throw Error('Envie de 1 a 20 etiquetas por vez. Divida CSVs maiores para validar papel e aquecimento.');
+    this.busy=true;this.cancelled=false;
+    try {
+      // Validate every raster before sending anything. Keep the editor snapshot immutable.
+      const rasters=[];
+      for(let i=0;i<labels.length;i++) {
+        if(this.cancelled)throw Error('Preparação interrompida.');
+        onProgress({phase:'prepare',index:i+1,total:labels.length,percent:0});
+        const rows=await rasterize(labels[i]);
+        if(!rows.length||rows.length>1600||rows.some(r=>!(r instanceof Uint8Array)||r.length!==48))throw Error('Raster inválido.');
+        rasters.push(rows);
+      }
+      for(let index=0;index<rasters.length;index++) {
+        const frames=[...testFrames().slice(0,3),...rasters[index].map(row=>frame(0xa2,row)),...testFrames().slice(-4)];
+        for(let i=0;i<frames.length;i++) {
+          for(let offset=0;offset<frames[i].length;offset+=20) {
+            if(this.cancelled)throw Error('Envio interrompido. Dados já enviados podem continuar imprimindo.');
+            if(!this.connected)throw Error('Conexão perdida. Não reenvie automaticamente: pode duplicar etiquetas.');
+            await this.tx.writeValueWithoutResponse(frames[i].slice(offset,offset+20));await this.delay(20);
+          }
+          onProgress({phase:'send',index:index+1,total:labels.length,percent:Math.round((i+1)/frames.length*100)});
+        }
+        if(index<rasters.length-1)await this.delay(2000);
+      }
+      this.onChange('Envio de '+labels.length+' etiqueta(s) concluído. Confira o papel e teste a leitura dos códigos.');
+    } finally {this.busy=false;}
+  }
   async printTest(onProgress=()=>{}){
     if(this.busy) throw Error('Operação Bluetooth em andamento.');
     if(!this.connected) throw Error('Conecte a PD01 primeiro.');

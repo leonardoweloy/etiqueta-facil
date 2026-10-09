@@ -27,6 +27,8 @@ test('interface inicializa, troca fita e adiciona texto pelos casos de uso', asy
   globalThis.window={addEventListener(type, callback){windowListeners[type]=callback;},confirm:()=>confirmed};globalThis.JsBarcode=JsBarcode;globalThis.qrcode=qrcode;
   try {
     await import('../app.js');
+    assert.equal(window.etiquetaPrinterSource(false).length,1);
+    assert.ok(window.etiquetaPrinterSource(true).length>=1);
     assert.match(node('dimensions').textContent,/58 × 35/);
     node('preset').value='20'; node('preset').onchange();
     assert.match(node('dimensions').textContent,/20 × 40/);

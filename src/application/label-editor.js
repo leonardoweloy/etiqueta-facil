@@ -53,10 +53,15 @@ export class LabelEditor {
     const index = this.label.add(item); this.save(); return index;
   }
   exportJpeg() { return this.exporter.export(this.preview()); }
-  exportPdf() {
+  printLabels(all = false) {
+    if (!all) return [this.preview()];
+    return this.batchLabels();
+  }
+  exportPdf() { return this.pdfExporter.export(this.batchLabels()); }
+  batchLabels() {
     const state = this.snapshot();
-    if (state.batchMode === 'csv') return this.pdfExporter.export(this.collection().materializeAll(state));
+    if (state.batchMode === 'csv') return this.collection().materializeAll(state);
     const batch = new LabelBatch(state.batch);
-    return this.pdfExporter.export(Array.from({ length: batch.count }, (_, index) => materializeLabel(state, batch.identifier(index))));
+    return Array.from({ length: batch.count }, (_, index) => materializeLabel(state, batch.identifier(index)));
   }
 }

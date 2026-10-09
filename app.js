@@ -11,6 +11,7 @@ const calibration = new ScreenCalibrationStore(localStorage);
 const editor = new LabelEditor({ repository: new LocalStorageLabelRepository(localStorage),
   exporter: new JpegExporter(renderer), pdfExporter: new PdfExporter(),
   onPersistenceError: () => message('Armazenamento local cheio. Exporte seu JPG antes de fechar.') });
+window.etiquetaPrinterSource = all => editor.printLabels(all);
 let state = editor.snapshot(), selected = 0, real = false, screenScale = calibration.load(), boxes = [], drag = null;
 function message(text) { $('message').textContent = text; }
 function refreshState() { state = editor.snapshot(); }
