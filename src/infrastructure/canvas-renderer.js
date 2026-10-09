@@ -1,3 +1,4 @@
+import { barcodeRects, qrRects } from './code-geometry.js';
 /** Draws label DTOs without owning editor state or canvas dimensions. */
 export class CanvasRenderer {
   constructor() {
@@ -35,6 +36,14 @@ export class CanvasRenderer {
           context.fillText(line, item.x * scale,
             (item.y + lineIndex * item.size * 1.2) * scale);
         });
+      } else if (item.type === 'barcode' || item.type === 'qr') {
+        const rects = item.type === 'barcode' ? barcodeRects(item.value, item) : qrRects(item);
+        for (const r of rects) context.fillRect(r.x * scale, r.y * scale, r.w * scale, r.h * scale);
+        if (item.type === 'barcode') {
+          context.font = font({ weight: 'normal', size: 2 }, scale);
+          const width = context.measureText(item.value).width;
+          context.fillText(item.value, (item.x + item.width / 2) * scale - width / 2, (item.y + item.height + 0.5) * scale);
+        }
       } else {
         const image = this.images.get(item.src);
         if (image?.complete && image.naturalWidth) {
@@ -72,6 +81,7 @@ function font(item, scale) {
 }
 
 function bounds(item, context, scale, images) {
+  if (item.type === 'barcode' || item.type === 'qr') return { x: item.x, y: item.y, w: item.width, h: item.type === 'barcode' ? item.height + 3 : item.width };
   if (item.type === 'image') {
     const image = images.get(item.src);
     return {

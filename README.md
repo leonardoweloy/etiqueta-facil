@@ -15,7 +15,7 @@ A interface usa snapshots; não modifica o agregado diretamente. As dependência
 
 ## Testes
 
-Com Node.js 22 ou superior, execute `npm test`. Não é necessário instalar dependências. Execute `npm run check` para validar a sintaxe da entrada da interface.
+Com Node.js 22 ou superior, execute `npm test`. Execute `npm ci` antes dos testes (os testes de PDF usam os pacotes locais). Execute `npm run check` para validar a sintaxe da apresentação, domínio, aplicação, infraestrutura e testes. Runtime browser usa somente as distribuições vendorizadas.
 
 ## Rodar com Docker
 
@@ -36,4 +36,16 @@ Abra http://localhost:8080. Para parar: `docker compose down`. O serviço fica a
 - Exporte JPG. As guias e a seleção não aparecem no arquivo. O JPG inclui densidade JFIF em DPI e dimensões em pixels calculadas a partir dos milímetros.
 - Imprima pelo software/driver da impressora, usando as medidas escolhidas, sem ajustar à página. A largura útil de uma impressora de 58 mm pode ser menor que 58 mm. Consulte o fabricante. A margem é uma guia visual, não um limitador de conteúdo.
 
-Não há envio direto à impressora. A precisão final depende do driver, da área imprimível e da calibração da impressora. A fonte da interface pode carregar do Google Fonts; sem internet utiliza Arial. O editor não envia o conteúdo das etiquetas a servidores.
+## PDF vetorial e lotes
+
+O botão Exportar PDF / lote gera um arquivo local com uma página por etiqueta, nas medidas exatas em mm (não A4). Texto Helvetica e retângulos Code128/QR permanecem vetoriais; somente logos são imagens raster. DPI afeta JPG, não os vetores PDF. Fontes PDF padrão cobrem português/Latin-1; outros alfabetos em texto comum exigiriam fonte embutida (não implementada). QR aceita UTF-8.
+
+Em Conteúdo, adicione Code128 sequencial ou QR opcional; ambos têm posição e tamanho em mm e podem ser arrastados. QR vazio não é desenhado. O QR contém o campo livre, sem substituições automáticas. O Code128 contém prefixo + número do lote com zeros à esquerda e legenda legível. Textos comuns continuam estáticos.
+
+Lote aceita início + quantidade ou início + fim inclusivo; até 500 etiquetas, inteiros não negativos seguros, prefixo ASCII imprimível até 24 caracteres e mínimo de 1–16 dígitos (números maiores não são truncados). QR até 500 bytes UTF-8. Prévia e JPG mostram apenas o primeiro identificador. Os controles persistem no navegador; projetos anteriores recebem configuração de lote padrão sem perder conteúdo.
+
+Imprima PDF a 100%, sem ajustar à página. Ajuste o layout e preserve zonas brancas dos códigos; elementos fora da página são cortados e layouts muito pequenos podem não ser legíveis. Teste os códigos com o leitor real antes de imprimir um lote. Lotes máximos com QR/logos podem consumir memória; o gerador cede execução entre páginas.
+
+Bibliotecas browser estão vendorizadas em src/infrastructure/vendor: jsPDF 4.2.1, JsBarcode 3.12.1 e qrcode-generator 2.0.4, com licenças MIT. Não há CDN em runtime. Para atualizar, use npm ci (ou npm install com versões explícitas), copie as respectivas distribuições browser e preserve licenças. npm audit é recomendado. npm test inclui geometria de códigos e PDF real (MediaBox e quantidade de páginas).
+
+Não há envio direto à impressora. A precisão final depende do driver, da área imprimível e da calibração da impressora. A fonte da interface usa fontes locais do sistema. O editor não envia o conteúdo das etiquetas a servidores.

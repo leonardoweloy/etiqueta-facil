@@ -1,10 +1,12 @@
 import { Label, defaultLabel } from '../domain/label.js';
+import { LabelBatch, materializeLabel } from '../domain/batch.js';
 
 /** Portas injetadas: repository load/save; exporter export(snapshot). */
 export class LabelEditor {
-  constructor({ repository, exporter, onPersistenceError = () => {} }) {
+  constructor({ repository, exporter, pdfExporter, onPersistenceError = () => {} }) {
     this.repository = repository;
     this.exporter = exporter;
+    this.pdfExporter = pdfExporter;
     this.onPersistenceError = onPersistenceError;
     try {
       const saved = repository.load();
@@ -33,5 +35,18 @@ export class LabelEditor {
       width: Math.min(15, width - 2 * margin) });
     this.save(); return index;
   }
-  exportJpeg() { return this.exporter.export(this.snapshot()); }
+  configureBatch(patch) { this.configure({ batch: { ...this.snapshot().batch, ...patch } }); }
+  preview() { const state = this.snapshot(); return materializeLabel(state, new LabelBatch(state.batch).identifier()); }
+  addCode(type) {
+    const state = this.snapshot();
+    const item = type === 'barcode'
+      ? { type, x: state.margin, y: state.margin, width: Math.min(40, state.width - 2 * state.margin), height: 8 }
+      : { type: 'qr', value: '', x: state.margin, y: state.margin, width: Math.min(15, state.width - 2 * state.margin) };
+    const index = this.label.add(item); this.save(); return index;
+  }
+  exportJpeg() { return this.exporter.export(this.preview()); }
+  exportPdf() {
+    const state = this.snapshot(), batch = new LabelBatch(state.batch);
+    return this.pdfExporter.export(Array.from({ length: batch.count }, (_, index) => materializeLabel(state, batch.identifier(index))));
+  }
 }

@@ -1,3 +1,4 @@
+import { LabelBatch, defaultBatch } from './batch.js';
 /** Domínio puro: não depende de DOM, Canvas ou armazenamento. */
 export class Millimeters {
   constructor(value, min = 0, max = 300) {
@@ -19,13 +20,17 @@ export class PrintResolution {
 }
 
 function validateItem(item) {
-  if (!item || !['text', 'image'].includes(item.type)) throw new Error('Elemento inválido.');
+  if (!item || !['text', 'image', 'barcode', 'qr'].includes(item.type)) throw new Error('Elemento inválido.');
   new Millimeters(item.x); new Millimeters(item.y);
   if (item.type === 'text') {
     new Millimeters(item.size, 1, 50);
     if (typeof item.text !== 'string' || !['normal', 'bold'].includes(item.weight)) {
       throw new Error('Texto inválido.');
     }
+  } else if (item.type === 'barcode' || item.type === 'qr') {
+    new Millimeters(item.width, 5);
+    if (item.type === 'barcode') new Millimeters(item.height, 3, 100);
+    if (item.type === 'qr' && (typeof item.value !== 'string' || new TextEncoder().encode(item.value).length > 500)) throw new Error('QR aceita até 500 bytes UTF-8. Campo vazio não gera QR.');
   } else {
     new Millimeters(item.width, 1);
     if (typeof item.src !== 'string' || !/^data:image\/(png|jpeg|webp);base64,/.test(item.src)) {
@@ -44,7 +49,7 @@ export class Label {
     if (data.margin * 2 >= Math.min(data.width, data.height)) throw new RangeError('Margem excessiva.');
     if (!Array.isArray(data.items)) throw new Error('Elementos inválidos.');
     this.#data = { width: data.width, height: data.height, margin: data.margin,
-      dpi: data.dpi, items: data.items.map(validateItem) };
+      dpi: data.dpi, batch: new LabelBatch(data.batch ?? defaultBatch()).snapshot(), items: data.items.map(validateItem) };
   }
   snapshot() { return structuredClone(this.#data); }
   configure(patch) {

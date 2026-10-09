@@ -4,6 +4,11 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "node --check app.js"
+    "check": "node scripts/check.js"
+  },
+  "devDependencies": {
+    "jsbarcode": "3.12.1",
+    "jspdf": "4.2.1",
+    "qrcode-generator": "2.0.4"
   }
 }
