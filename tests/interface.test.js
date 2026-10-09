@@ -60,7 +60,7 @@ test('interface inicializa, troca fita e adiciona texto pelos casos de uso', asy
     node('template').value = 'asset-horizontal-58mm'; node('template').onchange();
     node('applyTemplate').onclick(); assert.equal(saved().items.length, count-1);
     confirmed = true; node('applyTemplate').onclick();
-    assert.equal(saved().height, 30); assert.equal(saved().items[0].text, 'WADS.DEV'); assert.equal(saved().batch.quantity, 3);
+    assert.equal(saved().height, 34); assert.equal(saved().items[0].text, 'WADS.DEV'); assert.equal(saved().batch.quantity, 3);
     assert.match(node('selectionName').textContent, /WADS.DEV/);
     confirmed = false; node('clearLabel').onclick(); assert.equal(saved().items.length,5);
     confirmed = true; node('clearLabel').onclick(); assert.equal(saved().items.length,0);

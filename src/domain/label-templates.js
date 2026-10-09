@@ -23,19 +23,19 @@ const templates = [
     ],
   },
   {
-    id: 'asset-horizontal-58mm', name: 'Patrimônio horizontal 58 mm', description: '58 × 30 mm · logo à esquerda, informações ao centro e QR opcional',
-    width: 58, height: 30, margin: 0,
+    id: 'asset-horizontal-58mm', name: 'Patrimônio horizontal 58 mm', description: '58 × 34 mm · elementos ampliados · logo à esquerda, informações ao centro e QR opcional',
+    width: 58, height: 34, margin: 0,
     items: [
-      { type: 'text', text: 'WADS.DEV', x: 0, y: 4, size: 2.2, weight: 'bold' },
-      { type: 'text', text: 'Monitor', x: 17, y: 0, size: 2.5, weight: 'bold' },
-      { type: 'text', text: 'Responsável', x: 17, y: 6, size: 1.8, weight: 'normal' },
-      { type: 'qr', value: '', x: 44, y: 0, width: 14 },
-      { type: 'barcode', x: 0, y: 19, width: 58, height: 8 },
+      { type: 'text', text: 'WADS.DEV', x: 0, y: 6, size: 2.7, weight: 'bold' },
+      { type: 'text', text: 'Monitor', x: 14, y: 0, size: 3.2, weight: 'bold' },
+      { type: 'text', text: 'Responsável', x: 14, y: 8, size: 2.6, weight: 'normal' },
+      { type: 'qr', value: '', x: 40, y: 0, width: 18 },
+      { type: 'barcode', x: 0, y: 19, width: 58, height: 12 },
     ],
   },
 ];
 const horizontal = templates.find(template => template.id === 'asset-horizontal-58mm');
-templates.push({ ...horizontal, id: 'asset-horizontal-csv', name: 'Patrimônio horizontal CSV', description: '58 × 30 mm · coluna1: equipamento · coluna2: número · coluna3: barcode e QR', items: horizontal.items.map(item => item.type === 'text' && item.text === 'Monitor' ? { ...item, text: '{{coluna1}}' } : item.type === 'text' && item.text === 'Responsável' ? { ...item, text: '{{coluna2}}' } : ['barcode', 'qr'].includes(item.type) ? { ...item, value: '{{coluna3}}' } : { ...item }) });
+templates.push({ ...horizontal, id: 'asset-horizontal-csv', name: 'Patrimônio horizontal CSV', description: '58 × 34 mm · elementos ampliados · coluna1: equipamento · coluna2: número · coluna3: barcode e QR', items: horizontal.items.map(item => item.type === 'text' && item.text === 'Monitor' ? { ...item, text: '{{coluna1}}' } : item.type === 'text' && item.text === 'Responsável' ? { ...item, text: '{{coluna2}}' } : ['barcode', 'qr'].includes(item.type) ? { ...item, value: '{{coluna3}}' } : { ...item }) });
 
 export function labelTemplateCatalog() {
   return templates.map(({ id, name, description, width, height }) => ({ id, name, description, width, height }));

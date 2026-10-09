@@ -37,7 +37,7 @@ test('catálogo contém três bases independentes, válidas e editáveis', () =>
 test('aplicação preserva DPI/lote e rejeita modelo desconhecido sem perder estado', () => {
   const editor = makeEditor(); editor.configure({ dpi: 600 }); editor.configureBatch({ start: 20, quantity: 4, prefix: 'PAT-' });
   const before = editor.snapshot(); editor.applyTemplate('asset-horizontal-58mm'); const state = editor.snapshot();
-  assert.equal(state.dpi, 600); assert.deepEqual(state.batch, before.batch); assert.equal(state.height, 30);
+  assert.equal(state.dpi, 600); assert.deepEqual(state.batch, before.batch); assert.equal(state.height, 34);
   assert.equal(state.items[0].text, 'WADS.DEV'); assert.equal(state.items.some(item => item.type === 'image'), false);
   assert.equal(state.items.find(item => item.type === 'qr').value, '');
   assert.throws(() => editor.applyTemplate('inexistente')); assert.deepEqual(editor.snapshot(), state);
@@ -49,6 +49,15 @@ test('excluir último elemento, adicionar depois e limpar preservam configuraç�
   editor.updateElement(0, { text: 'Recomeço' }); assert.equal(editor.snapshot().items[0].text, 'Recomeço');
   editor.clearElements(); assert.deepEqual(editor.snapshot(), { ...before, items: [] });
   assert.equal(editor.addCode('qr'), 0);
+});
+test('horizontal ampliado mantém logo centro QR lado a lado',()=>{
+ const dto=labelFromTemplate('asset-horizontal-csv',{dpi:203,batch:defaultLabel().batch,csv:defaultLabel().csv}).snapshot();
+ assert.equal(dto.height,34);
+ const qr=dto.items.find(i=>i.type==='qr'),barcode=dto.items.find(i=>i.type==='barcode');
+ assert.equal(qr.width,18);assert.equal(qr.x+qr.width,dto.width);
+ assert.equal(barcode.height,12);assert.equal(barcode.width,58);
+ assert.ok(dto.items[0].x<dto.items[1].x&&dto.items[1].x<qr.x);
+ assert.equal(dto.items[1].size,3.2);assert.equal(dto.items[2].size,2.6);
 });
 test('QR vazio tem placeholder apenas na prévia, nunca na exportação', () => {
   const calls = []; const context = { fillRect(){}, fillText(text){ calls.push(text); }, strokeRect(){}, setLineDash(){}, measureText(){ return { width: 1 }; } };
