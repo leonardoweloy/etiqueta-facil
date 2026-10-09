@@ -28,7 +28,9 @@ test('alteração inválida não corrompe o agregado', () => {
 });
 test('movimento limita coordenadas e mantém precisão decimal', () => {
   const label = defaultLabel(); label.move(0, -5, 99);
-  assert.equal(label.snapshot().items[0].x, 0); assert.equal(label.snapshot().items[0].y, 34);
+  assert.equal(label.snapshot().items[0].x, -5); assert.equal(label.snapshot().items[0].y, 99);
+  assert.equal(new Label(label.snapshot()).snapshot().items[0].x,-5);
+  label.move(0,-999,999);assert.equal(label.snapshot().items[0].x,-300);assert.equal(label.snapshot().items[0].y,300);
   label.move(0, 3.1415, 4.25); assert.equal(label.snapshot().items[0].x, 3.1);
 });
 test('dados persistidos inválidos retornam ao padrão', () => {

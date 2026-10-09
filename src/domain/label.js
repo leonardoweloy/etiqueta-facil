@@ -22,7 +22,7 @@ export class PrintResolution {
 
 function validateItem(item) {
   if (!item || !['text', 'image', 'barcode', 'qr'].includes(item.type)) throw new Error('Elemento inválido.');
-  new Millimeters(item.x); new Millimeters(item.y);
+  new Millimeters(item.x, -300, 300); new Millimeters(item.y, -300, 300);
   if (item.type === 'text') {
     new Millimeters(item.size, 1, 50);
     if (typeof item.text !== 'string' || !['normal', 'bold'].includes(item.weight)) {
@@ -72,8 +72,8 @@ export class Label {
   remove(index) { this.#require(index); this.#data.items.splice(index, 1); }
   move(index, x, y) {
     const round = value => Math.round(value * 10) / 10;
-    this.update(index, { x: round(Math.max(0, Math.min(this.#data.width - 1, x))),
-      y: round(Math.max(0, Math.min(this.#data.height - 1, y))) });
+    this.update(index, { x: round(Math.max(-300, Math.min(300, x))),
+      y: round(Math.max(-300, Math.min(300, y))) });
   }
   #require(index) {
     if (!Number.isInteger(index) || !this.#data.items[index]) throw new RangeError('Elemento não encontrado.');

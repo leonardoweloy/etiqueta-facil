@@ -33,6 +33,8 @@ test('interface inicializa, troca fita e adiciona texto pelos casos de uso', asy
     node('preset').value='20'; node('preset').onchange();
     assert.match(node('dimensions').textContent,/20 × 40/);
     node('addText').onclick();
+    node('x').value='-3';node('x').listeners.input();
+    assert.equal(JSON.parse(storage.get('etiqueta-project')).items.at(-1).x,-3);
     assert.equal(JSON.parse(storage.get('etiqueta-project')).items.length,5);
     node('batchQuantity').value='3';node('batchQuantity').listeners.change();
     assert.equal(JSON.parse(storage.get('etiqueta-project')).batch.quantity,3);
