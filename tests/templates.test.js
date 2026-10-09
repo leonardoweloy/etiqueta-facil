@@ -22,7 +22,8 @@ test('catálogo contém três bases independentes, válidas e editáveis', () =>
   catalog[0].name = 'modificado'; assert.notEqual(labelTemplateCatalog()[0].name, 'modificado');
   for (const template of catalog) {
     const label = labelFromTemplate(template.id, defaultLabel().snapshot());
-    const state = label.snapshot(); assert.equal(state.width, template.width); assert.equal(state.height, template.height);
+    const state = label.snapshot();
+    assert.equal(state.margin,0); assert.equal(state.width, template.width); assert.equal(state.height, template.height);
     for (const item of state.items) {
       assert.ok(item.x >= state.margin && item.y >= state.margin);
       if (item.width) assert.ok(item.x + item.width <= state.width - state.margin);

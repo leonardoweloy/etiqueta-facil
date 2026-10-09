@@ -1,7 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {packRaster,rasterSize} from '../src/infrastructure/pd01-raster.js';
-import {frame,testFrames,Pd01Printer,PD01_SERVICE} from '../src/infrastructure/pd01-printer.js';
+import {frame,energyFrames,testFrames,Pd01Printer,PD01_SERVICE} from '../src/infrastructure/pd01-printer.js';
+test('PD01 energy bounded big endian command order and no implicit maximum',()=>{
+ assert.deepEqual(energyFrames('device'),[]);
+ for(const [level,value] of [['light',0x3000],['medium',0x5000],['strong',0x7000]]){
+ const commands=energyFrames(level);assert.deepEqual([...commands[0]], [...frame(0xaf,[value>>8,value&255])]);assert.deepEqual([...commands[1]],[...frame(0xbe,[1])]);
+ const frames=testFrames(level);assert.deepEqual(frames.slice(2,4),commands);assert.equal(frames[4][2],0xa6);
+ }
+ assert.throws(()=>energyFrames('max'),/inválida/);
+});
 test('raster preserves scale centered LSB black and transparency',()=>{
  assert.equal(rasterSize({width:58,height:20}).width,384);
  assert.equal(rasterSize({width:20,height:20}).width,157);

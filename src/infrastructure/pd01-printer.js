@@ -5,9 +5,15 @@ export function frame(command, data = []) {
   for (const byte of data) { crc ^= byte; for (let bit = 0; bit < 8; bit++) crc = ((crc << 1) ^ ((crc & 128) ? 7 : 0)) & 255; }
   return Uint8Array.from([0x51, 0x78, command, 0, data.length & 255, data.length >> 8, ...data, crc, 255]);
 }
-export function testFrames() {
+export function energyFrames(level = 'device') {
+ const levels={light:0x3000,medium:0x5000,strong:0x7000};
+ if(level==='device')return [];
+ if(!Object.hasOwn(levels,level))throw Error('Intensidade PD01 inválida.');
+ const value=levels[level];return [frame(0xaf,[value>>8,value&255]),frame(0xbe,[1])];
+}
+export function testFrames(level = 'device') {
   const start = [0xaa,0x55,0x17,0x38,0x44,0x5f,0x5f,0x5f,0x44,0x38,0x2c];
-  const frames = [frame(0xa3,[0]),frame(0xa4,[0x32]),frame(0xa6,start)];
+  const frames = [frame(0xa3,[0]),frame(0xa4,[0x32]),...energyFrames(level),frame(0xa6,start)];
   // Sparse calibration pattern: outline, central cross, no solid heating block.
   for(let y=0;y<96;y++) {
     const row = new Uint8Array(48);
@@ -38,10 +44,11 @@ export class Pd01Printer {
   }
   disconnect(){this.cancelled=true;this.tx=null;this.device?.gatt?.disconnect();}
   cancel(){this.cancelled=true;}
-  async printLabels(labels, rasterize, onProgress=()=>{}) {
+  async printLabels(labels, rasterize, onProgress=()=>{}, level='device') {
     if(this.busy) throw Error('Operação Bluetooth em andamento.');
     if(!this.connected) throw Error('Conecte a PD01 primeiro.');
     if(!Array.isArray(labels)||!labels.length||labels.length>20) throw Error('Envie de 1 a 20 etiquetas por vez. Divida CSVs maiores para validar papel e aquecimento.');
+    const energy=energyFrames(level);
     this.busy=true;this.cancelled=false;
     try {
       // Validate every raster before sending anything. Keep the editor snapshot immutable.
@@ -54,7 +61,7 @@ export class Pd01Printer {
         rasters.push(rows);
       }
       for(let index=0;index<rasters.length;index++) {
-        const frames=[...testFrames().slice(0,3),...rasters[index].map(row=>frame(0xa2,row)),...testFrames().slice(-4)];
+        const frames=[...testFrames().slice(0,2),...energy,...testFrames().slice(2,3),...rasters[index].map(row=>frame(0xa2,row)),...testFrames().slice(-4)];
         for(let i=0;i<frames.length;i++) {
           for(let offset=0;offset<frames[i].length;offset+=20) {
             if(this.cancelled)throw Error('Envio interrompido. Dados já enviados podem continuar imprimindo.');
@@ -68,12 +75,12 @@ export class Pd01Printer {
       this.onChange('Envio de '+labels.length+' etiqueta(s) concluído. Confira o papel e teste a leitura dos códigos.');
     } finally {this.busy=false;}
   }
-  async printTest(onProgress=()=>{}){
+  async printTest(onProgress=()=>{}, level='device'){
     if(this.busy) throw Error('Operação Bluetooth em andamento.');
     if(!this.connected) throw Error('Conecte a PD01 primeiro.');
     this.busy=true;this.cancelled=false;
     try{
-      const frames=testFrames();
+      const frames=testFrames(level);
       for(let i=0;i<frames.length;i++){
         const bytes=frames[i];
         for(let offset=0;offset<bytes.length;offset+=20){
