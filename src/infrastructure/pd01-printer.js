@@ -61,7 +61,7 @@ export class Pd01Printer {
         rasters.push(rows);
       }
       for(let index=0;index<rasters.length;index++) {
-        const frames=[...testFrames().slice(0,2),...energy,...testFrames().slice(2,3),...rasters[index].map(row=>frame(0xa2,row)),frame(0xbd,[index<rasters.length-1?4:40]),frame(0xa1,[0x30,0]),...testFrames().slice(-2)];
+        const frames=[...testFrames().slice(0,2),...energy,...testFrames().slice(2,3),...rasters[index].map(row=>frame(0xa2,row)),frame(0xbd,[index<rasters.length-1?1:40]),frame(0xa1,[0x30,0]),...testFrames().slice(-2)];
         for(let i=0;i<frames.length;i++) {
           for(let offset=0;offset<frames[i].length;offset+=20) {
             if(this.cancelled)throw Error('Envio interrompido. Dados já enviados podem continuar imprimindo.');
