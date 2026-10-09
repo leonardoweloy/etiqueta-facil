@@ -23,7 +23,8 @@ test('interface inicializa, troca fita e adiciona texto pelos casos de uso', asy
   globalThis.document={getElementById:node,createElement:()=>({})};
   const storage=new Map();
   globalThis.localStorage={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)};
-  globalThis.window={addEventListener(){}};globalThis.JsBarcode=JsBarcode;globalThis.qrcode=qrcode;
+  const windowListeners = {}; let confirmed = false;
+  globalThis.window={addEventListener(type, callback){windowListeners[type]=callback;},confirm:()=>confirmed};globalThis.JsBarcode=JsBarcode;globalThis.qrcode=qrcode;
   try {
     await import('../app.js');
     assert.match(node('dimensions').textContent,/58 × 35/);
@@ -39,6 +40,34 @@ test('interface inicializa, troca fita e adiciona texto pelos casos de uso', asy
     node('batchQuantity').value='501';node('batchQuantity').listeners.change();
     assert.match(node('message').textContent,/500/);assert.equal(JSON.parse(storage.get('etiqueta-project')).batch.quantity,3);
     node('real').onclick(); assert.ok(node('canvas').style.width.endsWith('px'));
+    const saved = () => JSON.parse(storage.get('etiqueta-project'));
+    const count = saved().items.length;
+    const key = (target, name = 'Delete', extra = {}) => {
+      let prevented = false;
+      windowListeners.keydown({ key: name, target, preventDefault(){prevented=true;}, ...extra });
+      return prevented;
+    };
+    for (const tagName of ['INPUT', 'TEXTAREA', 'SELECT']) {
+      assert.equal(key({tagName}), false); assert.equal(saved().items.length, count);
+    }
+    assert.equal(key({isContentEditable:true}), false);
+    assert.equal(key({closest:()=>({})}), false);
+    assert.equal(key({}, 'Delete', {isComposing:true}), false);
+    document.activeElement = {tagName:'INPUT'}; assert.equal(key({}), false); delete document.activeElement;
+    assert.equal(key({}), true); assert.equal(saved().items.length, count-1);
+    node('template').value = 'asset-horizontal-58mm'; node('template').onchange();
+    node('applyTemplate').onclick(); assert.equal(saved().items.length, count-1);
+    confirmed = true; node('applyTemplate').onclick();
+    assert.equal(saved().height, 30); assert.equal(saved().items[0].text, 'WADS.DEV'); assert.equal(saved().batch.quantity, 3);
+    assert.match(node('selectionName').textContent, /WADS.DEV/);
+    confirmed = false; node('clearLabel').onclick(); assert.equal(saved().items.length,5);
+    confirmed = true; node('clearLabel').onclick(); assert.equal(saved().items.length,0);
+    assert.equal(node('previewRemove').disabled,true); assert.equal(node('remove').disabled,true);
+    assert.match(node('selectionName').textContent,/Nenhum/); assert.equal(key({},'Backspace'),false);
+    node('addText').onclick(); assert.equal(Number(node('elements').value),0); assert.equal(node('previewRemove').disabled,false);
+    assert.equal(key({},'Backspace'),true); assert.equal(saved().items.length,0);
+    node('addText').onclick(); node('previewRemove').onclick(); assert.equal(saved().items.length,0);
+    node('addText').onclick(); node('remove').onclick(); assert.equal(saved().items.length,0);
   } finally {
     delete globalThis.document;delete globalThis.localStorage;delete globalThis.window;delete globalThis.JsBarcode;delete globalThis.qrcode;
   }

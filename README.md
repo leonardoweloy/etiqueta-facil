@@ -27,6 +27,16 @@ docker compose up -d --build
 
 Abra http://localhost:8080. Para parar: `docker compose down`. O serviço fica acessível somente nesta máquina.
 
+## Modelos editáveis e exclusão
+
+Escolha um modelo e clique em **Aplicar modelo**. Havendo conteúdo, confirme a substituição. As bases são Inventário padrão (58 × 35 mm), Compacto 20 mm (20 × 40 mm) e Patrimônio horizontal 58 mm (58 × 30 mm). O catálogo pertence ao domínio; a aplicação cria um agregado validado e preserva o lote sequencial e o DPI. Cada texto/código pode ser selecionado, alterado, movido ou excluído. Trocar somente o perfil de fita não aplica um modelo.
+
+O modelo horizontal usa o placeholder textual **WADS.DEV** à esquerda, **Monitor / Responsável** ao centro, QR vazio opcional à direita e Code128 abaixo. Não inventa imagem de logo nem destino QR. O contorno “QR opcional” é mostrado somente na prévia; QR vazio não aparece nos arquivos exportados.
+
+Para excluir, selecione um elemento no desenho ou no seletor **Elementos** e use **Excluir elemento selecionado**, junto à prévia, ou o botão original **Remover elemento** na sidebar. O nome/tipo selecionado aparece junto à prévia. Delete/Backspace funcionam apenas fora de input, textarea, select e conteúdo editável. **Limpar etiqueta** solicita confirmação e preserva medidas, lote e DPI. Após excluir o último elemento, adicione texto/imagem/código ou aplique uma base normalmente.
+
+Uma foto/screenshot importada é uma única imagem: seus textos internos não viram elementos editáveis. Selecione **Imagem importada** e exclua a imagem para substituí-la por um modelo com elementos independentes.
+
 ## Usar
 
 - Selecione fita de 20 mm, 58 mm ou largura personalizada. Ajuste altura, margem e resolução (203, 300 ou 600 DPI).

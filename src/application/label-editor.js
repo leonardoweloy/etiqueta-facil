@@ -1,5 +1,6 @@
 import { Label, defaultLabel } from '../domain/label.js';
 import { LabelBatch, materializeLabel } from '../domain/batch.js';
+import { labelTemplateCatalog, labelFromTemplate } from '../domain/label-templates.js';
 
 /** Portas injetadas: repository load/save; exporter export(snapshot). */
 export class LabelEditor {
@@ -20,6 +21,9 @@ export class LabelEditor {
   }
   configure(patch) { this.label.configure(patch); this.save(); }
   selectTape(width) { this.label.useTape(width); this.save(); }
+  templates() { return labelTemplateCatalog(); }
+  applyTemplate(id) { this.label = labelFromTemplate(id, this.snapshot()); this.save(); }
+  clearElements() { this.label.configure({ items: [] }); this.save(); }
   updateElement(index, patch) { this.label.update(index, patch); this.save(); }
   moveElement(index, x, y) { this.label.move(index, x, y); }
   removeElement(index) { this.label.remove(index); this.save(); }

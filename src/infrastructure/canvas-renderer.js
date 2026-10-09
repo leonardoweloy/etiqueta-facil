@@ -37,6 +37,13 @@ export class CanvasRenderer {
             (item.y + lineIndex * item.size * 1.2) * scale);
         });
       } else if (item.type === 'barcode' || item.type === 'qr') {
+        if (preview && item.type === 'qr' && !item.value) {
+          context.strokeStyle = '#a7b6ad'; context.lineWidth = 1; context.setLineDash([3, 3]);
+          context.strokeRect(item.x * scale, item.y * scale, item.width * scale, item.width * scale);
+          context.setLineDash([]); context.fillStyle = '#6b7e72';
+          context.font = font({ weight: 'normal', size: 1.5 }, scale);
+          context.fillText('QR opcional', (item.x + 0.5) * scale, (item.y + item.width / 2) * scale);
+        }
         const rects = item.type === 'barcode' ? barcodeRects(item.value, item) : qrRects(item);
         for (const r of rects) context.fillRect(r.x * scale, r.y * scale, r.w * scale, r.h * scale);
         if (item.type === 'barcode') {
