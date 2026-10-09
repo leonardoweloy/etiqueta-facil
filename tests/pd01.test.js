@@ -21,7 +21,10 @@ test('PD01 labels preflight atomicity limit progress and cancellation',async()=>
  await assert.rejects(()=>printer.printLabels(Array(21).fill({}),async()=>[]),/20/);assert.equal(sent.length,0);
  let count=0;await assert.rejects(()=>printer.printLabels([{},{}],async()=>{if(++count===2)throw Error('bad CSV');return [new Uint8Array(48)];}),/bad CSV/);assert.equal(sent.length,0);
  const progress=[];await printer.printLabels([{},{}],async()=>[new Uint8Array(48)],p=>progress.push(p));assert.equal(progress.at(-1).index,2);assert.equal(progress.at(-1).percent,100);
- const feeds=sent.filter(b=>b[0]===0x51&&b[1]===0x78&&b[2]===0xbd);assert.deepEqual(feeds.map(b=>b[6]),[1,40]);
+ const commands=sent.filter(b=>b[0]===0x51&&b[1]===0x78);
+ assert.deepEqual(commands.map(b=>b[2]),[0xa3,0xa4,0xa6,0xa2,0xa2,0xbd,0xa1,0xa6,0xa3]);
+ assert.equal(commands.filter(b=>b[2]===0xa1).length,1);
+ assert.equal(commands.find(b=>b[2]===0xbd)[6],40);
  await assert.rejects(()=>printer.printLabels([{}],async()=>[new Uint8Array(48)],p=>{if(p.phase==='send')printer.cancel();}),/interrompido/);assert.equal(printer.busy,false);
 });
 test('PD01 checksum fixtures and sparse 384-dot test',()=>{
